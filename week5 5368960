@@ -1,0 +1,304 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyNBhgn8kRrJHuFam7naArwp",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/hyo08009-bit/-/blob/main/week5%205368960\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "lKXojgBSE1KK",
+        "outputId": "085179ae-9853-48f9-ed7d-e5fba15226ae"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "전체 데이터 개수: 30\n",
+            "입력 데이터 Shape: torch.Size([30, 4])\n",
+            "정답 데이터 Shape: torch.Size([30, 1])\n",
+            "첫 번째 입력: tensor([ 1.9269,  1.4873,  0.9007, -2.1055])\n",
+            "첫 번째 정답: tensor([-2.7997])\n"
+          ]
+        }
+      ],
+      "source": [
+        "import torch\n",
+        "import torch.nn as nn\n",
+        "from torch.utils.data import Dataset, DataLoader\n",
+        "\n",
+        "torch.manual_seed(42)\n",
+        "\n",
+        "# 데이터 30개, 입력 특성 4개 생성\n",
+        "X = torch.randn(30, 4)\n",
+        "\n",
+        "# 학습에 사용할 정답 y 생성\n",
+        "# y = 2*x1 - x2 + 0.5*x3 + 3*x4 + 0.7\n",
+        "w = torch.tensor([[2.0], [-1.0], [0.5], [3.0]])\n",
+        "y = X @ w + 0.7\n",
+        "\n",
+        "\n",
+        "class MyDataset(Dataset):\n",
+        "\n",
+        "    # __init__: 입력 데이터와 정답 데이터를 저장\n",
+        "    def __init__(self, X, y):\n",
+        "        self.X = X\n",
+        "        self.y = y\n",
+        "\n",
+        "    # __len__: 전체 데이터 개수 반환\n",
+        "    def __len__(self):\n",
+        "        return len(self.X)\n",
+        "\n",
+        "    # __getitem__: 지정된 인덱스의 입력과 정답 반환\n",
+        "    def __getitem__(self, idx):\n",
+        "        return self.X[idx], self.y[idx]\n",
+        "\n",
+        "\n",
+        "# 사용자 정의 Dataset 생성\n",
+        "dataset = MyDataset(X, y)\n",
+        "\n",
+        "print(\"전체 데이터 개수:\", len(dataset))\n",
+        "print(\"입력 데이터 Shape:\", X.shape)\n",
+        "print(\"정답 데이터 Shape:\", y.shape)\n",
+        "\n",
+        "# 첫 번째 데이터 확인\n",
+        "x0, y0 = dataset[0]\n",
+        "\n",
+        "print(\"첫 번째 입력:\", x0)\n",
+        "print(\"첫 번째 정답:\", y0)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Batch Size 7, 순서 유지, 마지막 Batch 사용\n",
+        "loader = DataLoader(\n",
+        "    dataset,\n",
+        "    batch_size=7,\n",
+        "    shuffle=False,\n",
+        "    drop_last=False\n",
+        ")\n",
+        "\n",
+        "print(\"전체 Batch 개수:\", len(loader))\n",
+        "print()\n",
+        "\n",
+        "for i, (bx, by) in enumerate(loader):\n",
+        "    print(f\"Batch {i+1}\")\n",
+        "    print(\"입력 Shape:\", bx.shape)\n",
+        "    print(\"정답 Shape:\", by.shape)\n",
+        "    print(\"-\" * 30)\n",
+        "\n",
+        "print(\"마지막 Batch 크기가 다른 이유:\")\n",
+        "print(\"전체 데이터가 30개이므로 7개씩 4번 가져오고,\")\n",
+        "print(\"남은 2개가 마지막 Batch에 포함되기 때문입니다.\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "dQtY5pZ5E_of",
+        "outputId": "21d51ac5-14fb-4328-e8c2-772ad015a1ad"
+      },
+      "execution_count": 2,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "전체 Batch 개수: 5\n",
+            "\n",
+            "Batch 1\n",
+            "입력 Shape: torch.Size([7, 4])\n",
+            "정답 Shape: torch.Size([7, 1])\n",
+            "------------------------------\n",
+            "Batch 2\n",
+            "입력 Shape: torch.Size([7, 4])\n",
+            "정답 Shape: torch.Size([7, 1])\n",
+            "------------------------------\n",
+            "Batch 3\n",
+            "입력 Shape: torch.Size([7, 4])\n",
+            "정답 Shape: torch.Size([7, 1])\n",
+            "------------------------------\n",
+            "Batch 4\n",
+            "입력 Shape: torch.Size([7, 4])\n",
+            "정답 Shape: torch.Size([7, 1])\n",
+            "------------------------------\n",
+            "Batch 5\n",
+            "입력 Shape: torch.Size([2, 4])\n",
+            "정답 Shape: torch.Size([2, 1])\n",
+            "------------------------------\n",
+            "마지막 Batch 크기가 다른 이유:\n",
+            "전체 데이터가 30개이므로 7개씩 4번 가져오고,\n",
+            "남은 2개가 마지막 Batch에 포함되기 때문입니다.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "DataLoader의 입력 Shape은 `(batch_size, 특성 수)`로 표현됩니다.\n",
+        "\n",
+        "`(7, 4)`는 하나의 Batch에 데이터 7개가 포함되어 있고, 각 데이터가 4개의 입력 특성을 가지고 있다는 의미입니다.\n",
+        "\n",
+        "정답 Shape인 `(7, 1)`은 7개의 데이터 각각에 하나의 정답값이 존재한다는 의미입니다.\n",
+        "\n",
+        "전체 데이터가 30개이고 Batch Size가 7이므로 7개씩 4번 처리한 후 2개가 남습니다. 따라서 마지막 Batch의 입력 Shape은 `(2, 4)`이고 정답 Shape은 `(2, 1)`이 됩니다.\n",
+        "\n",
+        "`drop_last=False`로 설정했기 때문에 마지막 2개 데이터도 버리지 않고 사용합니다."
+      ],
+      "metadata": {
+        "id": "1vpIUr-cFFm_"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# 학습할 때는 데이터를 섞어서 사용\n",
+        "train_loader = DataLoader(\n",
+        "    dataset,\n",
+        "    batch_size=7,\n",
+        "    shuffle=True\n",
+        ")\n",
+        "\n",
+        "# 입력 특성 4개, 출력 1개인 선형 모델\n",
+        "model = nn.Linear(4, 1)\n",
+        "\n",
+        "# 손실 함수: 평균제곱오차\n",
+        "loss_fn = nn.MSELoss()\n",
+        "\n",
+        "# 최적화 함수: 확률적 경사하강법\n",
+        "optimizer = torch.optim.SGD(\n",
+        "    model.parameters(),\n",
+        "    lr=0.05\n",
+        ")\n",
+        "\n",
+        "# 학습 횟수\n",
+        "epochs = 40\n",
+        "\n",
+        "for epoch in range(epochs):\n",
+        "\n",
+        "    model.train()\n",
+        "    total_loss = 0.0\n",
+        "\n",
+        "    for bx, by in train_loader:\n",
+        "\n",
+        "        # 1. 예측\n",
+        "        pred = model(bx)\n",
+        "\n",
+        "        # 2. 손실 계산\n",
+        "        loss = loss_fn(pred, by)\n",
+        "\n",
+        "        # 3. 기울기 초기화\n",
+        "        optimizer.zero_grad()\n",
+        "\n",
+        "        # 4. 역전파\n",
+        "        loss.backward()\n",
+        "\n",
+        "        # 5. 가중치 수정\n",
+        "        optimizer.step()\n",
+        "\n",
+        "        # Batch별 손실 누적\n",
+        "        total_loss += loss.item() * bx.shape[0]\n",
+        "\n",
+        "    # Epoch 평균 손실 계산\n",
+        "    avg_loss = total_loss / len(dataset)\n",
+        "\n",
+        "    print(f\"Epoch {epoch+1:02d} | 평균 손실: {avg_loss:.6f}\")\n",
+        "\n",
+        "\n",
+        "# 학습된 가중치와 편향 확인\n",
+        "print(\"\\n학습 완료\")\n",
+        "print(\"학습된 가중치:\", model.weight.data)\n",
+        "print(\"학습된 편향:\", model.bias.data)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "BTH0VyI4FGNk",
+        "outputId": "5bcacf31-27a9-4384-c0c5-9bee3d7c5e03"
+      },
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Epoch 01 | 평균 손실: 10.916564\n",
+            "Epoch 02 | 평균 손실: 4.900914\n",
+            "Epoch 03 | 평균 손실: 2.290931\n",
+            "Epoch 04 | 평균 손실: 1.034179\n",
+            "Epoch 05 | 평균 손실: 0.484654\n",
+            "Epoch 06 | 평균 손실: 0.222814\n",
+            "Epoch 07 | 평균 손실: 0.107483\n",
+            "Epoch 08 | 평균 손실: 0.049081\n",
+            "Epoch 09 | 평균 손실: 0.024517\n",
+            "Epoch 10 | 평균 손실: 0.011888\n",
+            "Epoch 11 | 평균 손실: 0.006081\n",
+            "Epoch 12 | 평균 손실: 0.003083\n",
+            "Epoch 13 | 평균 손실: 0.001668\n",
+            "Epoch 14 | 평균 손실: 0.000797\n",
+            "Epoch 15 | 평균 손실: 0.000365\n",
+            "Epoch 16 | 평균 손실: 0.000181\n",
+            "Epoch 17 | 평균 손실: 0.000090\n",
+            "Epoch 18 | 평균 손실: 0.000036\n",
+            "Epoch 19 | 평균 손실: 0.000021\n",
+            "Epoch 20 | 평균 손실: 0.000010\n",
+            "Epoch 21 | 평균 손실: 0.000006\n",
+            "Epoch 22 | 평균 손실: 0.000003\n",
+            "Epoch 23 | 평균 손실: 0.000001\n",
+            "Epoch 24 | 평균 손실: 0.000001\n",
+            "Epoch 25 | 평균 손실: 0.000000\n",
+            "Epoch 26 | 평균 손실: 0.000000\n",
+            "Epoch 27 | 평균 손실: 0.000000\n",
+            "Epoch 28 | 평균 손실: 0.000000\n",
+            "Epoch 29 | 평균 손실: 0.000000\n",
+            "Epoch 30 | 평균 손실: 0.000000\n",
+            "Epoch 31 | 평균 손실: 0.000000\n",
+            "Epoch 32 | 평균 손실: 0.000000\n",
+            "Epoch 33 | 평균 손실: 0.000000\n",
+            "Epoch 34 | 평균 손실: 0.000000\n",
+            "Epoch 35 | 평균 손실: 0.000000\n",
+            "Epoch 36 | 평균 손실: 0.000000\n",
+            "Epoch 37 | 평균 손실: 0.000000\n",
+            "Epoch 38 | 평균 손실: 0.000000\n",
+            "Epoch 39 | 평균 손실: 0.000000\n",
+            "Epoch 40 | 평균 손실: 0.000000\n",
+            "\n",
+            "학습 완료\n",
+            "학습된 가중치: tensor([[ 2.0000, -1.0000,  0.5000,  3.0000]])\n",
+            "학습된 편향: tensor([0.7000])\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
